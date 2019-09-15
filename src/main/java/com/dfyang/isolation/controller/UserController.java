@@ -17,7 +17,7 @@ public class UserController {
      */
     @GetMapping("/transaction1")
     public String readUncommitted1() throws Exception {
-        Connection connection = startTransaction(Connection.TRANSACTION_READ_COMMITTED);
+        Connection connection = startTransaction(Connection.TRANSACTION_READ_UNCOMMITTED);
         try {
             ResultSet resultSet = executeQuery(connection, "select id,name from t_user where id = 1");
             System.out.println("[事务1]查询当前id为1的name：" + resultSet.getString("name"));
@@ -43,6 +43,7 @@ public class UserController {
      */
     @GetMapping("/transaction2")
     public String readUncommitted2() throws Exception {
+
         Connection connection = startTransaction(Connection.TRANSACTION_READ_UNCOMMITTED);
         try {
             ResultSet resultSet = executeQuery(connection, "select id,name from t_user where id = 1");
@@ -50,9 +51,96 @@ public class UserController {
             System.out.println("[事务2]等待5s");
             Thread.sleep(5000);
             resultSet = executeQuery(connection, "select id,name from t_user where id = 1");
-            System.out.println("[事务2]等待3s后查询到的结果：" + resultSet.getString("name"));
+            System.out.println("[事务2]等待5s后查询到的结果：" + resultSet.getString("name"));
             connection.commit();
             System.out.println("[事务2]提交事务");
+        } catch (Exception e) {
+            connection.rollback();
+        } finally {
+            connection.close();
+        }
+        return "成功";
+    }
+
+    /**
+     * 读提交事务3
+     * @return
+     * @throws Exception
+     */
+    @GetMapping("/transaction3")
+    public String readCommitted() throws Exception {
+
+        Connection connection = startTransaction(Connection.TRANSACTION_READ_COMMITTED);
+        try {
+            ResultSet resultSet = executeQuery(connection, "select id,name from t_user where id = 1");
+            System.out.println("[事务3]查询当前id为1的name：" + resultSet.getString("name"));
+            System.out.println("[事务3]等待5s");
+            Thread.sleep(5000);
+            resultSet = executeQuery(connection, "select id,name from t_user where id = 1");
+            System.out.println("[事务3]等待5s后查询到的结果：" + resultSet.getString("name"));
+            Thread.sleep(10000);
+            resultSet = executeQuery(connection, "select id,name from t_user where id = 1");
+            System.out.println("[事务3]查询10s后查询到的结果：" + resultSet.getString("name"));
+            connection.commit();
+            System.out.println("[事务3]提交事务");
+        } catch (Exception e) {
+            connection.rollback();
+        } finally {
+            connection.close();
+        }
+        return "成功";
+    }
+
+    /**
+     * 可重复读事务4
+     * @return
+     * @throws Exception
+     */
+    @GetMapping("/transaction4")
+    public String repeatableRead() throws Exception {
+
+        Connection connection = startTransaction(Connection.TRANSACTION_REPEATABLE_READ);
+        try {
+            ResultSet resultSet = executeQuery(connection, "select id,name from t_user where id = 1");
+            System.out.println("[事务4]查询当前id为1的name：" + resultSet.getString("name"));
+            System.out.println("[事务4]等待5s");
+            Thread.sleep(5000);
+            resultSet = executeQuery(connection, "select id,name from t_user where id = 1");
+            System.out.println("[事务4]等待5s后查询到的结果：" + resultSet.getString("name"));
+            Thread.sleep(10000);
+            resultSet = executeQuery(connection, "select id,name from t_user where id = 1");
+            System.out.println("[事务4]查询10s后查询到的结果：" + resultSet.getString("name"));
+            connection.commit();
+            System.out.println("[事务4]提交事务");
+        } catch (Exception e) {
+            connection.rollback();
+        } finally {
+            connection.close();
+        }
+        return "成功";
+    }
+
+    /**
+     * 串行化事务5
+     * @return
+     * @throws Exception
+     */
+    @GetMapping("/transaction5")
+    public String serializable() throws Exception {
+
+        Connection connection = startTransaction(Connection.TRANSACTION_SERIALIZABLE);
+        try {
+            ResultSet resultSet = executeQuery(connection, "select id,name from t_user where id = 1");
+            System.out.println("[事务5]查询当前id为1的name：" + resultSet.getString("name"));
+            System.out.println("[事务5]等待5s");
+            Thread.sleep(5000);
+            resultSet = executeQuery(connection, "select id,name from t_user where id = 1");
+            System.out.println("[事务5]等待5s后查询到的结果：" + resultSet.getString("name"));
+            Thread.sleep(10000);
+            resultSet = executeQuery(connection, "select id,name from t_user where id = 1");
+            System.out.println("[事务5]查询10s后查询到的结果：" + resultSet.getString("name"));
+            connection.commit();
+            System.out.println("[事务5]提交事务");
         } catch (Exception e) {
             connection.rollback();
         } finally {
