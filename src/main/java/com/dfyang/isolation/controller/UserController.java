@@ -204,6 +204,65 @@ public class UserController {
         return "成功";
     }
 
+    @GetMapping("/repeatableRead1")
+    public String repeatableRead1() throws Exception {
+        Connection connection = startTransaction(Connection.TRANSACTION_REPEATABLE_READ);
+        try {
+            ResultSet resultSet = executeQuery(connection, "select age from t_user where id = 1");
+            System.out.println("[事务1]查询到的age：" + resultSet.getString("age"));
+            System.out.println("[事务1]等待10s");
+            Thread.sleep(10000);
+            resultSet = executeQuery(connection, "select age from t_user where id = 1");
+            System.out.println("[事务1]等待10s后查询到的age：" + resultSet.getString("age"));
+            connection.commit();
+        } catch (Exception e) {
+            connection.rollback();
+        } finally {
+            connection.close();
+        }
+        return "成功";
+    }
+
+    @GetMapping("/repeatableRead2")
+    public String repeatableRead2() throws Exception {
+        Connection connection = startTransaction(Connection.TRANSACTION_REPEATABLE_READ);
+        try {
+            System.out.println("[事务2]等待6s");
+            Thread.sleep(1000);
+            ResultSet resultSet = executeQuery(connection, "select age from t_user where id = 1");
+            System.out.println("[事务2]等待1s后，查询到的age：" + resultSet.getString("age"));
+            System.out.println("[事务2]等待5s");
+            Thread.sleep(5000);
+            System.out.println("[事务2]等待5s后，将age+1");
+            executeUpdate(connection, "update t_user set age = age + 1 where id = 1");
+            resultSet = executeQuery(connection, "select age from t_user where id = 1");
+            System.out.println("[事务2]执行修改后，查询到的age：" + resultSet.getString("age"));
+            connection.commit();
+        } catch (Exception e) {
+            connection.rollback();
+        } finally {
+            connection.close();
+        }
+        return "成功";
+    }
+
+    @GetMapping("/repeatableRead3")
+    public String repeatableRead3() throws Exception {
+        Connection connection = startTransaction(Connection.TRANSACTION_REPEATABLE_READ);
+        try {
+            System.out.println("[事务3]等待2s");
+            Thread.sleep(2000);
+            System.out.println("[事务3]等待2s后，将age+1");
+            executeUpdate(connection, "update t_user set age = age + 1 where id = 1");
+            connection.commit();
+        } catch (Exception e) {
+            connection.rollback();
+        } finally {
+            connection.close();
+        }
+        return "成功";
+    }
+
     public Connection startTransaction(int isolation) throws Exception {
         Connection connection = ConnectionFactory.getConnection();
         connection.setTransactionIsolation(isolation);
