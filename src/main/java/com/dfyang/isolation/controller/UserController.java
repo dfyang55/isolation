@@ -127,7 +127,6 @@ public class UserController {
      */
     @GetMapping("/transaction5")
     public String serializable() throws Exception {
-
         Connection connection = startTransaction(Connection.TRANSACTION_SERIALIZABLE);
         try {
             ResultSet resultSet = executeQuery(connection, "select id,name from t_user where id = 1");
@@ -141,6 +140,62 @@ public class UserController {
             System.out.println("[事务5]查询10s后查询到的结果：" + resultSet.getString("name"));
             connection.commit();
             System.out.println("[事务5]提交事务");
+        } catch (Exception e) {
+            connection.rollback();
+        } finally {
+            connection.close();
+        }
+        return "成功";
+    }
+
+    @GetMapping("/transactionA")
+    public String transactionA() throws Exception {
+        Connection connection = startTransaction(Connection.TRANSACTION_REPEATABLE_READ);
+        try {
+            executeUpdate(connection, "update t_user set age = 10 where id = 1");
+            System.out.println("[事务A]将age修改为11，等待10s");
+            Thread.sleep(10000);
+            ResultSet resultSet = executeQuery(connection, "select age from t_user where id = 1");
+            System.out.println("[事务A]等待10s后查询到的age：" + resultSet.getString("age"));
+            connection.commit();
+        } catch (Exception e) {
+            connection.rollback();
+        } finally {
+            connection.close();
+        }
+        return "成功";
+    }
+
+    @GetMapping("/transactionB")
+    public String transactionB() throws Exception {
+        Connection connection = startTransaction(Connection.TRANSACTION_REPEATABLE_READ);
+        try {
+            System.out.println("[事务B]等待2s");
+            Thread.sleep(3000);
+            System.out.println("[事务B]等待2s后，将age修改为11");
+            executeUpdate(connection, "update t_user set age = 11 where id = 1");
+            connection.commit();
+        } catch (Exception e) {
+            connection.rollback();
+        } finally {
+            connection.close();
+        }
+        return "成功";
+    }
+
+    @GetMapping("/transactionC")
+    public String transactionC() throws Exception {
+        Connection connection = startTransaction(Connection.TRANSACTION_REPEATABLE_READ);
+        try {
+            System.out.println("[事务C]等待5s");
+            Thread.sleep(5000);
+            System.out.println("[事务C]等待5s后，将age修改为12");
+            executeUpdate(connection, "update t_user set age = 12 where id = 1");
+            System.out.println("[事务C]将age修改为13");
+            executeUpdate(connection, "update t_user set age = 13 where id = 1");
+            System.out.println("[事务C]将age修改为14");
+            executeUpdate(connection, "update t_user set age = 14 where id = 1");
+            connection.commit();
         } catch (Exception e) {
             connection.rollback();
         } finally {
